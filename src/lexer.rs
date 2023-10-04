@@ -4,6 +4,7 @@ pub enum Token {
     Identifier(String),
     Operator(String),
     Number(i64),
+    Directive(String), 
 }
 
 pub fn tokenize_line(line: &str) -> Vec<Token> {
@@ -13,7 +14,8 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
     while let Some(&c) = iter.peek() {
         if c.is_whitespace() {
             iter.next();
-        } else if c.is_alphabetic() {
+        } 
+        else if c.is_alphabetic() {
             let mut identifier = String::new();
             while let Some(&c) = iter.peek() {
                 if c.is_alphabetic() || c.is_digit(10) {
@@ -40,10 +42,26 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
                 }
             }
             tokens.push(Token::Number(number));
-        } else if c == '+' || c == '-' {
+        } 
+        else if c == '+' || c == '-' {
             let operator: String = iter.next().unwrap().to_string();
             tokens.push(Token::Operator(operator));
-        } else {
+        } 
+        else if c == '.' {
+            let mut directive = String::new();
+            iter.next();
+            while let Some(&c) = iter.peek() {
+                if c.is_alphabetic() {
+                    directive.push(c);
+                    iter.next();
+                } 
+                else {
+                    break;
+                }
+            }
+            tokens.push(Token::Directive(directive));
+        } 
+        else {
             iter.next();
         }
     }

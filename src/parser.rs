@@ -1,9 +1,13 @@
 use crate::lexer::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Add(String, String),
     Mov(String, String),
+    Start(i64),  
+    End,        
+    Byte(Vec<u8>), 
+    Word(i64),     
 }
 
 pub fn parse(tokens: Vec<Token>) -> Vec<Statement> {
@@ -24,6 +28,27 @@ pub fn parse(tokens: Vec<Token>) -> Vec<Statement> {
                     if let Some(Token::Identifier(y)) = iter.next() {
                         statements.push(Statement::Mov(x.clone(), y.clone()));
                     }
+                }
+            },
+            Token::Directive(d) => {
+                match d.as_str() {
+                    "START" => {
+                        if let Some(Token::Number(value)) = iter.next() {
+                            statements.push(Statement::Start(*value));
+                        }
+                    },
+                    "END" => {
+                        statements.push(Statement::End);
+                    },
+                    "BYTE" => {
+                        
+                    },
+                    "WORD" => {
+                        if let Some(Token::Number(value)) = iter.next() {
+                            statements.push(Statement::Word(*value));
+                        }
+                    },
+                    _ => {}
                 }
             },
             _ => {}

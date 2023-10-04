@@ -4,26 +4,49 @@ use crate::parser::Statement;
 pub enum SemanticError {
     InvalidOperand(String),
     InvalidInstruction(String),
+    InvalidDirectiveUsage(String), 
 }
 
 pub fn analyze(statements: Vec<Statement>) -> Result<(), SemanticError> {
-    for statement in &statements {
+    let mut start_found = false;
+    let mut end_found = false;
+
+    for statement in statements.iter() {
         match statement {
-            Statement::Add(x, y) => {
-                if !is_valid_operand(x) || !is_valid_operand(y) {
-                    return Err(SemanticError::InvalidOperand(format!("Invalid operand in ADD: {}, {}", x, y)));
-                }
+            Statement::Add(_, _) => {
+                
             },
-            Statement::Mov(x, y) => {
-                if !is_valid_operand(x) || !is_valid_operand(y) {
-                    return Err(SemanticError::InvalidOperand(format!("Invalid operand in MOV: {}, {}", x, y)));
+            Statement::Mov(_, _) => {
+               
+            },
+            Statement::Start(_) => {
+                if start_found {
+                    return Err(SemanticError::InvalidDirectiveUsage("Duplicate START directive".to_string()));
                 }
+                start_found = true;
+            },
+            Statement::End => {
+                if end_found {
+                    return Err(SemanticError::InvalidDirectiveUsage("Duplicate END directive".to_string()));
+                }
+                end_found = true;
+            },
+            Statement::Byte(_) => {
+
+            },
+            Statement::Word(_) => {
+                
             },
         }
     }
-    Ok(())
-}
 
-fn is_valid_operand(operand: &String) -> bool {
-    operand == "X" || operand == "Y" || operand == "Z"
+    if start_found && !end_found {
+        return Err(SemanticError::InvalidDirectiveUsage("START directive found but no matching END".to_string()));
+    }
+
+    if !start_found && end_found {
+        return Err(SemanticError::InvalidDirectiveUsage("END directive found but no matching START".to_string()));
+    }
+
+    Ok(())
 }

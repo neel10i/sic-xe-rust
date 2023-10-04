@@ -1,0 +1,2 @@
+MOV A,B
+ADD X,Y
