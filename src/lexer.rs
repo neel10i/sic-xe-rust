@@ -4,13 +4,13 @@ pub enum Token {
     Identifier(String),
     Operator(String),
     Number(i64),
-    Directive(String), 
+    Directive(String),
 }
 
 pub fn tokenize_line(line: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut iter = line.chars().peekable();
-    
+
     while let Some(&c) = iter.peek() {
         if c.is_whitespace() {
             iter.next();
@@ -21,23 +21,30 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
                 if c.is_alphabetic() || c.is_digit(10) {
                     identifier.push(c);
                     iter.next();
-                } else {
+                } 
+                else {
                     break;
                 }
             }
-            
-            if identifier == "MOV" || identifier == "ADD" {
+
+            if ["MOV", "ADD", "SUB", "MUL"].contains(&identifier.as_str()) {
                 tokens.push(Token::Keyword(identifier));
-            } else {
+            } 
+            else if ["START", "END", "BYTE", "WORD"].contains(&identifier.as_str()) {
+                tokens.push(Token::Directive(identifier));
+            } 
+            else {
                 tokens.push(Token::Identifier(identifier));
             }
-        } else if c.is_digit(10) {
+        } 
+        else if c.is_digit(10) {
             let mut number = 0;
             while let Some(&c) = iter.peek() {
                 if c.is_digit(10) {
                     number = number * 10 + c.to_digit(10).unwrap() as i64;
                     iter.next();
-                } else {
+                } 
+                else {
                     break;
                 }
             }
@@ -67,4 +74,3 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
     }
     tokens
 }
-

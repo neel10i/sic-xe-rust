@@ -1,23 +1,45 @@
+use std::collections::HashMap;
 use crate::parser::Statement;
 
 #[derive(Debug)]
 pub enum SemanticError {
     InvalidOperand(String),
     InvalidInstruction(String),
-    InvalidDirectiveUsage(String), 
+    InvalidDirectiveUsage(String),
+    SymbolAlreadyDefined(String),
+    SymbolNotFound(String),
 }
 
-pub fn analyze(statements: Vec<Statement>) -> Result<(), SemanticError> {
+pub fn populate_symbol_table(statements: &[Statement]) -> Result<HashMap<String, i64>, SemanticError> {
+    let mut symbol_table = HashMap::new();
+    let mut address_counter = 0;
+
+    for statement in statements.iter() {
+        match statement {
+            Statement::Label(label) => {
+                if symbol_table.contains_key(label) {
+                    return Err(SemanticError::SymbolAlreadyDefined(label.clone()));
+                }
+                symbol_table.insert(label.clone(), address_counter);
+            },
+            
+            _ => {
+                address_counter += 1;
+            },
+        }
+    }
+
+    Ok(symbol_table)
+}
+
+pub fn analyze(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Result<(), SemanticError> {
     let mut start_found = false;
     let mut end_found = false;
 
     for statement in statements.iter() {
         match statement {
-            Statement::Add(_, _) => {
+            Statement::Add(_, _) | Statement::Mov(_, _) => {
                 
-            },
-            Statement::Mov(_, _) => {
-               
             },
             Statement::Start(_) => {
                 if start_found {
@@ -31,12 +53,12 @@ pub fn analyze(statements: Vec<Statement>) -> Result<(), SemanticError> {
                 }
                 end_found = true;
             },
-            Statement::Byte(_) => {
-
+            Statement::Label(label) => {
+                if !symbol_table.contains_key(label) {
+                    return Err(SemanticError::SymbolNotFound(label.clone()));
+                }
             },
-            Statement::Word(_) => {
-                
-            },
+            _ => {}
         }
     }
 

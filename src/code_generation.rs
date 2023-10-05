@@ -1,30 +1,49 @@
+use std::collections::HashMap;
 use crate::parser::Statement;
 
-pub fn generate_code(statements: Vec<Statement>) -> Vec<String> {
-    let mut code = Vec::new();
+pub fn generate_code(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Vec<String> {
+    let mut generated_code = Vec::new();
 
     for statement in statements {
         match statement {
             Statement::Add(x, y) => {
-                code.push(format!("ADD {},{}", x, y));
+                let line = format!("ADD {}, {}", x, y);
+                generated_code.push(line);
             },
             Statement::Mov(x, y) => {
-                code.push(format!("MOV {},{}", x, y));
+                let line = format!("MOV {}, {}", x, y);
+                generated_code.push(line);
+            },
+            Statement::Sub(x, y) => {
+                let line = format!("SUB {}, {}", x, y);
+                generated_code.push(line);
+            },
+            Statement::Mul(x, y) => {
+                let line = format!("MUL {}, {}", x, y);
+                generated_code.push(line);
             },
             Statement::Start(address) => {
-                code.push(format!(".START {}", address));
+                let line = format!("START {}", address);
+                generated_code.push(line);
             },
             Statement::End => {
-                code.push(String::from(".END"));
+                generated_code.push("END".to_string());
             },
             Statement::Byte(bytes) => {
-                code.push(format!(".BYTE {:?}", bytes));
+                let line = format!("BYTE {:?}", bytes);
+                generated_code.push(line);
             },
-            Statement::Word(value) => {
-                code.push(format!(".WORD {}", value));
+            Statement::Word(word) => {
+                let line = format!("WORD {}", word);
+                generated_code.push(line);
+            },
+            Statement::Label(label) => {
+                if let Some(address) = symbol_table.get(label) {
+                    let line = format!("{}:", address);
+                    generated_code.push(line);
+                }
             },
         }
     }
-
-    code
+    generated_code
 }
