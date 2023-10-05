@@ -1,7 +1,14 @@
 use std::collections::HashMap;
 use crate::parser::Statement;
 
-pub fn generate_code(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Vec<String> {
+#[derive(Debug)]
+pub enum CodeGenerationError {
+    UndefinedSymbol(String),
+    InvalidInstruction(String),
+    Other(String),
+}
+
+pub fn generate_code(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Result<Vec<String>, CodeGenerationError> {
     let mut generated_code = Vec::new();
 
     for statement in statements {
@@ -41,9 +48,11 @@ pub fn generate_code(statements: &[Statement], symbol_table: &HashMap<String, i6
                 if let Some(address) = symbol_table.get(label) {
                     let line = format!("{}:", address);
                     generated_code.push(line);
+                } else {
+                    return Err(CodeGenerationError::UndefinedSymbol(label.clone()));
                 }
             },
         }
     }
-    generated_code
+    Ok(generated_code)
 }

@@ -14,7 +14,17 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
     while let Some(&c) = iter.peek() {
         if c.is_whitespace() {
             iter.next();
-        } 
+        }
+        else if c == '/' {
+            iter.next(); 
+            if let Some(&next_c) = iter.peek() {
+                if next_c == '/' {
+                    break; 
+                } else {
+                    iter.next(); 
+                }
+            }
+        }
         else if c.is_alphabetic() {
             let mut identifier = String::new();
             while let Some(&c) = iter.peek() {
@@ -29,14 +39,12 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
 
             if ["MOV", "ADD", "SUB", "MUL"].contains(&identifier.as_str()) {
                 tokens.push(Token::Keyword(identifier));
-            } 
-            else if ["START", "END", "BYTE", "WORD"].contains(&identifier.as_str()) {
+            } else if ["START", "END", "BYTE", "WORD"].contains(&identifier.as_str()) {
                 tokens.push(Token::Directive(identifier));
-            } 
-            else {
+            } else {
                 tokens.push(Token::Identifier(identifier));
             }
-        } 
+        }
         else if c.is_digit(10) {
             let mut number = 0;
             while let Some(&c) = iter.peek() {
@@ -49,11 +57,11 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
                 }
             }
             tokens.push(Token::Number(number));
-        } 
+        }
         else if c == '+' || c == '-' {
             let operator: String = iter.next().unwrap().to_string();
             tokens.push(Token::Operator(operator));
-        } 
+        }
         else if c == '.' {
             let mut directive = String::new();
             iter.next();
@@ -67,7 +75,7 @@ pub fn tokenize_line(line: &str) -> Vec<Token> {
                 }
             }
             tokens.push(Token::Directive(directive));
-        } 
+        }
         else {
             iter.next();
         }

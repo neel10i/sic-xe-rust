@@ -10,29 +10,34 @@ pub enum SemanticError {
     SymbolNotFound(String),
 }
 
-pub fn populate_symbol_table(statements: &[Statement]) -> Result<HashMap<String, i64>, SemanticError> {
+pub fn populate_symbol_table(statements: &[Statement]) -> Result<HashMap<String, i64>, Vec<SemanticError>> {
     let mut symbol_table = HashMap::new();
     let mut address_counter = 0;
+    let mut errors = Vec::new(); 
 
     for statement in statements.iter() {
         match statement {
             Statement::Label(label) => {
                 if symbol_table.contains_key(label) {
-                    return Err(SemanticError::SymbolAlreadyDefined(label.clone()));
+                    errors.push(SemanticError::SymbolAlreadyDefined(label.clone()));
                 }
                 symbol_table.insert(label.clone(), address_counter);
             },
-            
             _ => {
                 address_counter += 1;
             },
         }
     }
 
-    Ok(symbol_table)
+    if errors.is_empty() {
+        Ok(symbol_table)
+    } else {
+        Err(errors)
+    }
 }
 
-pub fn analyze(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Result<(), SemanticError> {
+pub fn analyze(statements: &[Statement], symbol_table: &HashMap<String, i64>) -> Result<(), Vec<SemanticError>> {
+    let mut errors = Vec::new(); 
     let mut start_found = false;
     let mut end_found = false;
 
@@ -43,19 +48,19 @@ pub fn analyze(statements: &[Statement], symbol_table: &HashMap<String, i64>) ->
             },
             Statement::Start(_) => {
                 if start_found {
-                    return Err(SemanticError::InvalidDirectiveUsage("Duplicate START directive".to_string()));
+                    errors.push(SemanticError::InvalidDirectiveUsage("Duplicate START directive".to_string()));
                 }
                 start_found = true;
             },
             Statement::End => {
                 if end_found {
-                    return Err(SemanticError::InvalidDirectiveUsage("Duplicate END directive".to_string()));
+                    errors.push(SemanticError::InvalidDirectiveUsage("Duplicate END directive".to_string()));
                 }
                 end_found = true;
             },
             Statement::Label(label) => {
                 if !symbol_table.contains_key(label) {
-                    return Err(SemanticError::SymbolNotFound(label.clone()));
+                    errors.push(SemanticError::SymbolNotFound(label.clone()));
                 }
             },
             _ => {}
@@ -63,12 +68,29 @@ pub fn analyze(statements: &[Statement], symbol_table: &HashMap<String, i64>) ->
     }
 
     if start_found && !end_found {
-        return Err(SemanticError::InvalidDirectiveUsage("START directive found but no matching END".to_string()));
+        errors.push(SemanticError::InvalidDirectiveUsage("START directive found but no matching END".to_string()));
     }
 
     if !start_found && end_found {
-        return Err(SemanticError::InvalidDirectiveUsage("END directive found but no matching START".to_string()));
+        errors.push(SemanticError::InvalidDirectiveUsage("END directive found but no matching START".to_string()));
     }
 
-    Ok(())
+    if errors.is_empty() {
+        Ok(())
+    } 
+    else {
+        Err(errors)
+    }
+}
+
+pub fn report_errors(errors: Vec<SemanticError>) {
+    for error in errors {
+        match error {
+            SemanticError::InvalidOperand(s) => println!("Invalid operand: {}", s),
+            SemanticError::InvalidInstruction(s) => println!("Invalid instruction: {}", s),
+            SemanticError::InvalidDirectiveUsage(s) => println!("Invalid directive usage: {}", s),
+            SemanticError::SymbolAlreadyDefined(s) => println!("Symbol already defined: {}", s),
+            SemanticError::SymbolNotFound(s) => println!("Symbol not found: {}", s),
+        }
+    }
 }

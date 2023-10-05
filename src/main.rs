@@ -18,20 +18,41 @@ fn main() -> io::Result<()> {
         let tokens = lexer::tokenize_line(&line);
         println!("Tokens: {:?}", tokens);
 
-        let statements = parser::parse(tokens);
-        println!("Parsed Statements: {:?}", statements);
-
-        let symbol_table: HashMap<String, i64> = semantic_analysis::populate_symbol_table(&statements)
-            .expect("Failed to populate symbol table");
-
-        if let Err(e) = semantic_analysis::analyze(&statements, &symbol_table) {
-            println!("Semantic analysis failed: {:?}", e);
-        } 
-        else {
-            println!("Semantic analysis passed");
+        let statements_result = parser::parse(&tokens);
+        
+        if let Ok(statements) = statements_result {
+            println!("Parsed Statements: {:?}", statements);
             
-            let generated_code = code_generation::generate_code(&statements, &symbol_table);
-            println!("Generated Code: {:?}", generated_code);
+            if statements.is_empty() && !tokens.is_empty() {
+                println!("Tokens found but no statements parsed");
+                continue;
+            }
+
+            let symbol_table_result = semantic_analysis::populate_symbol_table(&statements);
+
+            if let Ok(symbol_table) = symbol_table_result {
+                if let Err(e) = semantic_analysis::analyze(&statements, &symbol_table) {
+                    println!("Semantic analysis failed: {:?}", e);
+                } else {
+                    println!("Semantic analysis passed");
+
+                    let generated_code_result = code_generation::generate_code(&statements, &symbol_table);
+
+                    if let Ok(generated_code) = generated_code_result {
+                        println!("Generated Code: {:?}", generated_code);
+                        
+                        if generated_code.is_empty() && !statements.is_empty() {
+                            println!("Statements found but no code generated");
+                        }
+                    } else {
+                        println!("Code generation failed");
+                    }
+                }
+            } else {
+                println!("Failed to populate symbol table");
+            }
+        } else {
+            println!("Parsing failed");
         }
     }
 
